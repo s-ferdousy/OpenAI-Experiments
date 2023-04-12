@@ -1,0 +1,267 @@
+<meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8" />
+<!DOCTYPE html>
+<html lang="en"></html>
+
+<!--Beginning of HTML below-->
+<html>
+<head>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+
+  <!--Beginning of CSS styles below, all from Bootstrap-->
+  <style>
+
+    .bd-placeholder-img {
+      font-size: 1.125rem;
+      text-anchor: middle;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+    }
+
+    @media (min-width: 768px) {
+      .bd-placeholder-img-lg {
+        font-size: 3.5rem;
+      }
+    }
+
+    .b-example-divider {
+      height: 3rem;
+      background-color: rgba(0, 0, 0, .1);
+      border: solid rgba(0, 0, 0, .15);
+      border-width: 1px 0;
+      box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+    }
+
+    .b-example-vr {
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 100vh;
+    }
+
+    .bi {
+      vertical-align: -.125em;
+      fill: currentColor;
+    }
+
+    .nav-scroller {
+      position: relative;
+      z-index: 2;
+      height: 2.75rem;
+      overflow-y: hidden;
+    }
+
+  </style>
+
+  
+  <!-- Custom styles for this template -->
+  <link href="heroes.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  
+  <!--Below is the JS code to call the OpenAI API-->
+  <script>
+    
+    /*Below is called when the button is clicked*/
+    function callOpenAiAPI(buttonClicked) {
+    
+      /*These for loops look for the radio buttons that are checked and then assign the values to the variables - revType, infraType, yearsRev*/
+      let revType = document.getElementsByName('revenueType');
+      for(i = 0; i < revType.length; i++) {
+                if(revType[i].checked)
+                revType = revType[i].value;
+            }
+
+      let infraType = document.getElementsByName('typeOfInfra');
+      for(i = 0; i < infraType.length; i++) {
+                if(infraType[i].checked)
+                infraType = infraType[i].value;
+            }
+
+      let yearsRev = document.getElementsByName('yearsProj');
+      for(i = 0; i < yearsRev.length; i++) {
+                if(yearsRev[i].checked)
+                yearsRev = yearsRev[i].value;
+            }
+
+      /*Below sets up a variable called modelToUse which uses davinci or curie depending on which button is clicked*/
+      let modelToUse = 'text-davinci-003';
+
+      let openAIQuery = `tell me how to finance this infrastructure project. The project is for ${infraType} type of infrastructure in Africa for ${yearsRev} where I answered the following to whether I have signed revenue: ${revType}. Give me a short bit of advice on how to best achieve financial close given the information I have shared.`;
+      
+      /*openAIQuery is the actual query that is passed to the ChatGPT engine - the variables hold the selections that are inserted into the query and then sent to the API*/
+      if(buttonClicked.innerText == 'Write me a letter requesting funding.') {
+            modelToUse = 'text-davinci-003';
+            
+            document.querySelector('#ButtonDIVLetter').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading your letter. Please be patient.';
+            openAIQuery = `Write a letter requesting project finance funding for a  ${infraType} type of infrastructure in Africa for ${yearsRev} where I answered the following to whether I have signed revenue: ${revType}.`;
+      
+      }
+
+      if(buttonClicked.innerText == 'Give me advice!') {
+            modelToUse = 'text-davinci-003';
+            
+            document.querySelector('#ButtonDIVAdvice').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading your tailored advice. Please be patient while we formulate our opinion.';
+            openAIQuery = `tell me how to finance this infrastructure project. The project is for ${infraType} type of infrastructure in Africa for ${yearsRev} where I answered the following to whether I have signed revenue: ${revType}. Give me a short bit of advice on how to best achieve financial close given the information I have shared.`;
+      
+      }
+
+      $.ajax({
+        url: 'https://api.openai.com/v1/completions',                                         /*The link used to access the APIs*/
+        type: 'POST',                                                                         /*Type of API call*/
+        headers: {            
+          'Authorization': 'Bearer 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',      /*The API key*/
+          'Content-Type': 'application/json'                                                  /*The message sent to OpenAI API needs to be in JSON format*/
+        },
+        data: JSON.stringify({                                                                /*The message sent to OpenAI API needs to be in JSON format*/
+          'prompt': openAIQuery,                                                              /*The query that is sent (defined above in the variable openAIQuery)*/
+          'max_tokens': 2500,                                                                 /*Tokens can be thought of as pieces of words - https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them*/
+          'temperature': 0.4,                                                                 /*The temperature controls how much randomness is in the output -  https://algowriting.medium.com/gpt-3-temperature-setting-101-41200ff0d0be*/
+          'model': modelToUse                                                                 /*Models - https://platform.openai.com/docs/models#:~:text=We%20offer%20four%20main%20models,and%20Ada%20is%20the%20fastest.&text=Most%20capable%20GPT%2D3%20model,output%20and%20better%20instruction%2Dfollowing.*/
+        }),
+        success: function (data) {                                                            /*The message received from the OpenAI API is in JSON format and needs to be converted back to text*/                                                                          
+          $('#result').text(data.choices[0].text);                                            /*Return result to the HTML to display*/
+          
+          document.querySelector('#ButtonDIVAdvice').innerHTML ='Give me advice!';                            /*Change the button texts back to the original text*/
+          document.querySelector('#ButtonDIVLetter').innerHTML = 'Write me a letter requesting funding.';     /*Change the button texts back to the original text*/
+          
+        }
+      });
+      
+    }
+  </script> <!-- End of the JS code-->
+
+<!-- Start of the HTML body code below-->
+
+</head>
+<body>
+  <div>
+    <title>The Financial Modelling Podcast InfraAdvisor Beta</title>
+    <div class="px-4 py-2 my-2 text-center">
+      <!-- Below chooses an imagee to display-->
+      <img class="d-block mx-auto mb-4" src="https://sp-ao.shortpixel.ai/client/to_auto,q_lossless,ret_img,w_150/https://financialmodellingpodcast.com/wp-content/uploads/2019/09/png-2-1-150x150.png" alt="" width="150" height="150">
+      <h1 class="display-7 fw-bold">The Financial Modelling Podcast InfraAdvisor Beta</h1>
+      <figure class="text-center">
+
+        <!-- I liked this CSS for a quote! -->
+        <blockquote class="blockquote">
+          <p>The infrastructure sector is about building assets that make our lives better.</p>
+        </blockquote>
+        <figcaption class="blockquote-footer">
+          <cite title="Source Title">The Financial Modelling Podcast</cite>
+        </figcaption>
+      </figure>
+    </div>
+
+    <!-- Start of the questions and radio buttons below -->
+    <div class="flex-parent jc-center text-center">
+        <title>What type of infrastructure do you want to build?</title>
+        <h4 class="fw-bold">What type of infrastructure do you want to build?</h4>
+        <input class="form-check-input" type="radio" name="typeOfInfra" id="infraType" checked value="Roads and Borders">
+        <label class="form-check-label" for="infraType">
+          Roads and Borders
+        </label>
+        <br>
+        <input class="form-check-input" type="radio" name="typeOfInfra" id="PowerPlants" value="Power Plants">
+        <label class="form-check-label" for="PowerPlants">
+          Power Plants
+        </label>
+        <br>
+  
+        <input class="form-check-input" type="radio" name="typeOfInfra" id="AirportsInput" value="Airports">
+        <label class="form-check-label" for="AirportsInput">
+          Airports
+        </label>
+    </div>
+    <br>
+    <br>
+
+    <div class="flex-parent jc-center text-center">
+    <title>Do you have a signed agreement for your revenue stream?</title>
+    <h4 class="fw-bold">Do you have a signed agreement for your revenue stream?</h4>
+    <input class="form-check-input" type="radio" name="revenueType" id="signedRev" checked value="Yes there is signed revenue">
+    <label class="form-check-label" for="signedRev">
+      Yes
+    </label>
+    <br>
+  
+    
+    <input class="block form-check-input" type="radio" name="revenueType" id="notSignedRev" value="No there is not signed revenue">
+    <label class="form-check-label" for="notSignedRev">
+      No
+    </label>
+    <br>
+  
+    <input class="form-check-input" type="radio" name="revenueType" id="someSignedRev" value="Some of the revenue has been signed">
+    <label class="form-check-label" for="someSignedRev">
+      Some of the revenue
+    </label>
+    <br>
+    </div>
+
+    <br>
+    <br>
+    <div class="flex-parent jc-center text-center">
+  
+    <title>How many years is the project life?</title>
+    <h4 class="fw-bold">How many years is the project life?</h4>
+  
+      <input class="form-check-input" type="radio" name="yearsProj" id="five" checked value="5 years">
+      <label class="form-check-label" for="five">
+        5
+      </label>
+      <br>
+  
+      <input class="form-check-input" type="radio" name="yearsProj" id="ten" value="10 years">
+      <label class="form-check-label" for="ten">
+        10
+      </label>
+  
+      <br>
+      <input class="form-check-input" type="radio" name="yearsProj" id="twenty" value="20 years">
+      <label class="form-check-label" for="twenty">
+        20
+      </label>
+      <br>
+
+    </div>
+    <br>
+    <br>
+
+  </div>
+
+  <!-- Below are the button-->
+  <div class="flex-parent jc-center text-center">
+    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+      <button onclick="callOpenAiAPI(this)" type="button" id="adviceButton" class="btn btn-primary btn-lg px-4 gap-3">
+        <div id="ButtonDIVAdvice">
+            Give me advice!
+        </div>
+    </button>
+    <button onclick="callOpenAiAPI(this)" type="button" id="writeLetter" class="btn btn-primary btn-lg px-4 gap-3">
+        <div id="ButtonDIVLetter">
+            Write me a letter requesting funding.
+        </div>
+    </button>
+  </div>
+ 
+  <br>
+  <br>
+ 
+  <!-- Display the output/result below -->
+  <h5>InfraAdvisor says:</h5>
+  </div>
+     
+        <p ></p>
+        <div id="result" class="flex-parent jc-center text-center gap-3">
+          
+      </div>
+    
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+</body>
+</html>
+
+   
